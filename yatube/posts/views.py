@@ -90,7 +90,7 @@ def post_create(request):
     form = PostForm(
         request.POST or None,
         files=request.FILES or None
-        )
+    )
     if form.is_valid():
         post = form.save(commit=False)
         post.author = request.user
@@ -109,7 +109,7 @@ def post_edit(request, post_id):
         request.POST or None,
         files=request.FILES or None,
         instance=post
-        )
+    )
     if form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id)
