@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}
+  {% with request.resolver_match.view_name as view_name %}
+    {% if view_name  == 'posts:post_edit' %}Редактировать пост{% else %}Новый пост{% endif %}
+  {% endwith %} 
+{% endblock %} 
+{% block content %}
+  {% with request.resolver_match.view_name as view_name %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 p-5">
+        <div class="card">
+          <div class="card-header">       
+                {% if view_name  == 'posts:post_edit' %}Редактировать пост{% else %}Новый пост{% endif %}             
+              </div>
+              <div class="card-body">        
+                <form method="post" enctype="multipart/form-data" action="{% if view_name  == 'posts:post_edit' %}{% url 'posts:post_edit' post.id %}
+                {% else %}{% url 'posts:post_create' %}{% endif %} ">    
+                {% csrf_token %}     
+                  <div class="form-group row my-3 p-3">
+                    <label for="id_text">
+                      Текст поста                  
+                      <span class="required text-danger" >*</span>                  
+                    </label>
+                    <br>
+                    {% load user_filters %}
+                    {{ form.text|addclass:'form-control' }}           
+                    <small id="id_text-help" class="form-text text-muted">
+                      Текст нового поста
+                    </small>                  
+                  </div>            
+                  <div class="form-group row my-3 p-3">
+                    <label for="id_group">
+                      Group                  
+                    </label>
+                    <br>
+                   {{ form.group|addclass:'form-control' }}
+                    <small id="id_group-help" class="form-text text-muted">
+                      Группа, к которой будет относиться пост
+                    </small>
+                  </div>
+                  <br>
+                      <label for="id_image-help">
+                      Image
+                      </label>
+                  <br>
+                   {{ form.image|addclass:'form-control-file' }}
+                      <small id="id_image-help" class="form-text text-muted">
+                        Изображение к посту
+                      </small>
+                  <br>
+                  <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                      {% if view_name  == 'posts:post_edit' %}Добавить{% else %}Сохранить{% endif %}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  {% endwith %}
+{% endblock %}

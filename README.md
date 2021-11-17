@@ -1,3 +1,5 @@
-# hw05_final
+## Финальный проект по курсу Django.
+### Студент: Андрей Федотов.
+### Яндекс.Практикум.
+### 5-я когорта pythonplus.
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
