@@ -47,6 +47,12 @@ def profile(request, username):
     count = posts.count()
     page_obj = pagination(request, posts)
     following = False
+    # Для Ревьювера:
+    # Ваш комментарий: "Сможем объединить следующие два условия в одно
+    # выражение через or?"
+    # Мой вопрос: Если юзер анонимный, то запрос к Follow все порушит ((
+    # поэтому использую последовательные условия.. Что-то в голову не приходит
+    # как сделать по-другому...
     if request.user.is_authenticated:
         following = Follow.objects.filter(
             user=request.user
@@ -66,12 +72,7 @@ def post_detail(request, post_id):
     """View функция для страницы поста."""
     post = get_object_or_404(Post, id=post_id)
     comments = post.comments.all()
-    form = CommentForm(request.POST or None)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
+    form = CommentForm()
     author = post.author
     count = author.posts.all().count()
     context = {
@@ -100,6 +101,7 @@ def post_create(request):
     return render(request, 'posts/create_post.html', {'form': form})
 
 
+@login_required
 def post_edit(request, post_id):
     """View функция для редактирования поста."""
     post = get_object_or_404(Post, id=post_id)
@@ -134,9 +136,9 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
+    """View функция для ленты избранных авторов."""
     user = get_object_or_404(User, username=request.user.username)
-    follows = Follow.objects.filter(user=user).values_list('author_id')
-    posts = Post.objects.filter(author_id__in=follows)
+    posts = Post.objects.filter(author__following__user=user)
     page_obj = pagination(request, posts)
     context = {'page_obj': page_obj, 'follow': True}
     return render(request, 'posts/follow.html', context)
@@ -144,22 +146,18 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    if request.user.username == username:
+    """View функция для подписки на автора."""
+    user = get_object_or_404(User, username=username)
+    if request.user == user:
         return redirect('posts:profile', username=username)
     author = get_object_or_404(User, username=username)
-    already_follow = Follow.objects.filter(
-        user=request.user,
-        author=author
-    ).exists()
-    if already_follow:
-        return redirect('posts:profile', username=username)
-    follow = Follow(user=request.user, author=author)
-    follow.save()
+    Follow.objects.get_or_create(user=request.user,author=author)
     return redirect('posts:profile', username=username)
 
 
 @login_required
 def profile_unfollow(request, username):
+    """View функция для отписки."""
     author = get_object_or_404(User, username=username)
     follow = get_object_or_404(
         Follow,
