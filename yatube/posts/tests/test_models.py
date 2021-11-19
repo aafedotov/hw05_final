@@ -18,17 +18,17 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Тестовая группа',
+            text='Тестовый пост'*10,
         )
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
         post = PostModelTest.post
         group = PostModelTest.group
-        post.text = 'Тестовая группа' * 10
-        expected_str = 'Тестовая группа'
-        self.assertEqual(str(post), expected_str)
-        self.assertEqual(str(group), expected_str)
+        expected_post_str = 'Тестовый постТе'
+        expected_group_str = 'Тестовая группа'
+        self.assertEqual(str(post), expected_post_str)
+        self.assertEqual(str(group), expected_group_str)
 
     def test_verbose_name(self):
         """verbose_name в полях совпадает с ожидаемым."""

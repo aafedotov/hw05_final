@@ -1,11 +1,11 @@
 import shutil
 import tempfile
+from http import HTTPStatus
 
-
-from django.core.cache import cache
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -98,15 +98,11 @@ class PostTemplatesTests(TestCase):
 
     def setUp(self):
         self.user = PostTemplatesTests.user_author
+        self.user2 = PostTemplatesTests.user_author2
         self.authorized_client = Client()
+        self.authorized_client2 = Client()
         self.authorized_client.force_login(self.user)
-
-    def test_follow_page(self):
-        """Проверяем правильную выдачу на странице подписок."""
-        response = self.authorized_client.get(reverse('posts:follow_index'))
-        follow_objects = response.context['page_obj']
-        for post in follow_objects:
-            self.assertEqual(post.author, PostTemplatesTests.user_author2)
+        self.authorized_client2.force_login(self.user2)
 
     def test_pages_uses_correct_template(self):
         """
@@ -240,3 +236,76 @@ class PostTemplatesTests(TestCase):
         response3 = self.authorized_client.get(reverse('posts:index'))
         test_object3 = response3.content
         self.assertNotEqual(test_object1, test_object3)
+
+    def test_follow(self):
+        """Проверяем возможность подписки."""
+        follow_count = Follow.objects.count()
+        response = self.authorized_client2.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.user.username}
+            ),
+            follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertRedirects(
+            response, reverse(
+                'posts:profile',
+                kwargs={'username': self.user.username}
+            )
+        )
+        last_object = Follow.objects.last()
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
+        self.assertEqual(last_object.user, self.user2)
+        self.assertEqual(last_object.author, self.user)
+
+    def test_unfollow(self):
+        """Проверяем возможность отписки."""
+        follow_count = Follow.objects.count()
+        response = self.authorized_client.get(
+            reverse(
+                'posts:profile_unfollow',
+                kwargs={'username': self.user2.username}
+            ),
+            follow=True
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertRedirects(
+            response, reverse(
+                'posts:profile',
+                kwargs={'username': self.user2.username}
+            )
+        )
+        self.assertEqual(Follow.objects.count(), follow_count - 1)
+
+    def test_follow_page(self):
+        """Проверяем, что пост появляется в ленте избранных."""
+        Follow.objects.create(
+            user=self.user2,
+            author=self.user
+        )
+        Post.objects.create(
+            text='Тест подписки',
+            author=self.user
+        )
+        response = self.authorized_client2.get(reverse('posts:follow_index'))
+        follow_object = response.context['page_obj'][0]
+        expected_text = 'Тест подписки'
+        self.assertEqual(follow_object.author, self.user)
+        self.assertEqual(follow_object.text, expected_text)
+
+    def test_non_follow_page(self):
+        """Проверяем, что пост НЕ появляется в ленте избранных."""
+        Follow.objects.create(
+            user=self.user2,
+            author=self.user
+        )
+        Post.objects.create(
+            text='Тест подписки',
+            author=self.user
+        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        follow_object = response.context['page_obj'][0]
+        expected_text = 'Тест подписки'
+        self.assertNotEqual(follow_object.author, self.user)
+        self.assertNotEqual(follow_object.text, expected_text)

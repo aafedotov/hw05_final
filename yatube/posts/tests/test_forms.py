@@ -59,41 +59,6 @@ class PostTests(TestCase):
         self.authorized_client.force_login(self.user)
         self.authorized_client2.force_login(self.user2)
 
-    def test_follow_unfollow(self):
-        """Проверяем возможность подписки и отписки."""
-        follow_count = Follow.objects.count()
-        response = self.authorized_client.get(
-            reverse(
-                'posts:profile_follow',
-                kwargs={'username': self.user2.username}
-            ),
-            follow=True
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertRedirects(
-            response, reverse(
-                'posts:profile',
-                kwargs={'username': self.user2.username}
-            )
-        )
-        self.assertEqual(Follow.objects.count(), follow_count + 1)
-        self.assertEqual(Follow.objects.first().user, self.user)
-        self.assertEqual(Follow.objects.first().author, self.user2)
-        response = self.authorized_client.get(
-            reverse(
-                'posts:profile_unfollow',
-                kwargs={'username': self.user2.username}
-            ),
-            follow=True
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertRedirects(
-            response, reverse(
-                'posts:profile',
-                kwargs={'username': self.user2.username}
-            )
-        )
-        self.assertEqual(Follow.objects.count(), follow_count)
 
     def test_create_post(self):
         """Проверяем форму создания поста."""
@@ -114,16 +79,17 @@ class PostTests(TestCase):
                 kwargs={'username': self.user.username}
             )
         )
+        first_object = Post.objects.first()
         self.assertEqual(Post.objects.count(), post_count + 1)
-        self.assertEqual(Post.objects.first().text, form_data['text'])
-        self.assertTrue(Post.objects.first().image)
-        self.assertIsNone(Post.objects.first().group)
-        self.assertEqual(Post.objects.first().author, self.user)
+        self.assertEqual(first_object.text, form_data['text'])
+        self.assertTrue(first_object.image)
+        self.assertIsNone(first_object.group)
+        self.assertEqual(first_object.author, self.user)
 
     def test_add_comment(self):
         """Проверяем форму добавления комментария."""
         test_post = Post.objects.first()
-        comments_count = test_post.comments.all().count()
+        comments_count = test_post.comments.count()
         form_data = {
             'text': 'Тестовый коммент',
         }
@@ -141,8 +107,9 @@ class PostTests(TestCase):
                 kwargs={'post_id': test_post.pk}
             )
         )
-        self.assertEqual(test_post.comments.all().count(), comments_count + 1)
-        self.assertEqual(test_post.comments.first().text, form_data['text'])
+        comments = test_post.comments.all()
+        self.assertEqual(comments.count(), comments_count + 1)
+        self.assertEqual(comments.first().text, form_data['text'])
 
     def test_edit_post(self):
         """Проверяем форму редактирования поста."""
@@ -170,7 +137,7 @@ class PostTests(TestCase):
             form_data['text']
         )
         self.assertIsNone(test_post.group)
-        self.assertEqual(Post.objects.first().author, self.user)
+        self.assertEqual(test_post.author, self.user)
 
     def test_anonymous_create_post(self):
         """Проверяем, что анонимным юзером пост не создается."""

@@ -92,12 +92,28 @@ class PostsURLTests(TestCase):
         )
         self.assertRedirects(response, redirect_url)
 
-    def test_create_page(self):
+    def test_authorized_pages(self):
         """
-        Проверяем, что авторизованному юзеру доступна страница создания поста.
+        Проверяем, что авторизованному юзеру доступны страницы.
         """
-        response = self.authorized_client.get(reverse('posts:post_create'))
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        urls = [reverse('posts:post_create'),
+                reverse(
+                    'posts:add_comment',
+                    kwargs={'post_id': PostsURLTests.post.pk}
+                ),
+                reverse('posts:follow_index'),
+                reverse(
+                    'posts:profile_follow',
+                    kwargs={'username': PostsURLTests.user_author}
+                ),
+                reverse(
+                    'posts:profile_unfollow',
+                    kwargs={'username': PostsURLTests.user_author}
+                )
+                ]
+        for url in urls:
+            response = self.authorized_client.get(url, follow=True)
+            self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -108,6 +124,7 @@ class PostsURLTests(TestCase):
             '/posts/1/': 'posts/post_detail.html',
             '/posts/1/edit/': 'posts/create_post.html',
             '/create/': 'posts/create_post.html',
+            '/follow/': 'posts/follow.html',
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):
