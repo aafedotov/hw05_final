@@ -99,17 +99,14 @@ class PostsURLTests(TestCase):
         urls = [reverse('posts:post_create'),
                 reverse(
                     'posts:add_comment',
-                    kwargs={'post_id': PostsURLTests.post.pk}
-                ),
+                    kwargs={'post_id': PostsURLTests.post.pk}),
                 reverse('posts:follow_index'),
                 reverse(
                     'posts:profile_follow',
-                    kwargs={'username': PostsURLTests.user_author}
-                ),
+                    kwargs={'username': PostsURLTests.user_author}),
                 reverse(
                     'posts:profile_unfollow',
-                    kwargs={'username': PostsURLTests.user_author}
-                )
+                    kwargs={'username': PostsURLTests.user_author})
                 ]
         for url in urls:
             response = self.authorized_client.get(url, follow=True)

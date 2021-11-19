@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, Follow
+from ..models import Group, Post
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -58,7 +58,6 @@ class PostTests(TestCase):
         self.anonymous_client = Client()
         self.authorized_client.force_login(self.user)
         self.authorized_client2.force_login(self.user2)
-
 
     def test_create_post(self):
         """Проверяем форму создания поста."""
