@@ -46,7 +46,8 @@ def profile(request, username):
     posts = author.posts.all()
     count = posts.count()
     page_obj = pagination(request, posts)
-    following = request.user.is_authenticated and Follow.objects.filter(
+    following = request.user.is_authenticated and Follow.\
+        objects.filter(
             user=request.user
         ).filter(
             author=author
