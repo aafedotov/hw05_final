@@ -46,15 +46,7 @@ def profile(request, username):
     posts = author.posts.all()
     count = posts.count()
     page_obj = pagination(request, posts)
-    following = False
-    # Для Ревьювера:
-    # Ваш комментарий: "Сможем объединить следующие два условия в одно
-    # выражение через or?"
-    # Мой вопрос: Если юзер анонимный, то запрос к Follow все порушит ((
-    # поэтому использую последовательные условия.. Что-то в голову не приходит
-    # как сделать по-другому...
-    if request.user.is_authenticated:
-        following = Follow.objects.filter(
+    following = request.user.is_authenticated and Follow.objects.filter(
             user=request.user
         ).filter(
             author=author
@@ -137,8 +129,7 @@ def add_comment(request, post_id):
 @login_required
 def follow_index(request):
     """View функция для ленты избранных авторов."""
-    user = get_object_or_404(User, username=request.user.username)
-    posts = Post.objects.filter(author__following__user=user)
+    posts = Post.objects.filter(author__following__user=request.user)
     page_obj = pagination(request, posts)
     context = {'page_obj': page_obj, 'follow': True}
     return render(request, 'posts/follow.html', context)
@@ -150,8 +141,7 @@ def profile_follow(request, username):
     user = get_object_or_404(User, username=username)
     if request.user == user:
         return redirect('posts:profile', username=username)
-    author = get_object_or_404(User, username=username)
-    Follow.objects.get_or_create(user=request.user, author=author)
+    Follow.objects.get_or_create(user=request.user, author=user)
     return redirect('posts:profile', username=username)
 
 
